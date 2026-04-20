@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Writeups — Michael Bailey</title>
+  <meta name="description" content="Project writeups by Michael Bailey — AI-focused software engineering work." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <a href="index.html" class="brand">Michael Bailey</a>
+      <ul>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#projects">Projects</a></li>
+        <li><a href="assets/cv.pdf">CV</a></li>
+      </ul>
+    </nav>
+
+    <header>
+      <h1>Writeups</h1>
+      <p class="lede">
+        Longer-form looks at what I've built, why, and what I'd do differently.
+      </p>
+    </header>
+
+    <hr />
+
+    <!-- Travel Agent is unfinished — unhide once it's shippable
+    <article class="project-detail" id="travel-agent">
+      <h2>Travel Agent</h2>
+      <p class="meta">Personal project &middot; Python &middot; FastAPI &middot; TypeScript &middot; Vite &middot; LLM tool-use</p>
+
+      <h3>The problem</h3>
+      <p>
+        {{TRAVEL_AGENT_PROBLEM — what did you set out to solve? 2-3 sentences. "I wanted to learn agentic tool-use end-to-end by building something I'd actually use. A chat-based travel planner was a good forcing function: it needs multi-turn state, external API calls, and has a UI surface."}}
+      </p>
+
+      <h3>Approach</h3>
+      <p>
+        {{TRAVEL_AGENT_APPROACH — how you architected it. Backend (FastAPI) with a typed router layer, services calling the LLM, models for request/response. Frontend in Vite + TS for the chat UI. API keys via .env. What LLM provider, how tool-calls are wired.}}
+      </p>
+
+      <h3>Stack</h3>
+      <ul>
+        <li><strong>Backend:</strong> Python, FastAPI (uvicorn), structured with <code>routers/</code>, <code>services/</code>, <code>models/</code></li>
+        <li><strong>Frontend:</strong> TypeScript, Vite, {{UI_LIBRARY_IF_ANY}}</li>
+        <li><strong>LLM:</strong> {{PROVIDER — e.g. OpenAI / Anthropic}}, using function calling / tool use</li>
+        <li><strong>External APIs:</strong> {{EXTERNAL_APIS — e.g. flight search, maps}}</li>
+      </ul>
+
+      <h3>What I learned</h3>
+      <ul>
+        <li>{{LESSON_1 — a specific, non-obvious thing. "Streaming responses are worth the complexity on the first-token latency alone."}}</li>
+        <li>{{LESSON_2 — something about evals, prompt stability, cost, context windows}}</li>
+        <li>{{LESSON_3 — a trade-off you'd revisit}}</li>
+      </ul>
+
+      <h3>What I'd do next</h3>
+      <p>{{TRAVEL_AGENT_NEXT — one paragraph on what's unfinished and what you'd prioritise}}</p>
+
+      <p><a href="https://github.com/MBailey114/travel-agent">Source on GitHub</a></p>
+    </article>
+    -->
+
+    <article class="project-detail" id="flagship-work-project">
+      <h2>AI-powered self-serve dashboards</h2>
+      <p class="meta">Sky, 2025 – present &middot; Built solo &middot; Next.js, Python, custom MCP, OpenAI (GPT), OpenSearch</p>
+
+      <h3>The problem</h3>
+      <p>
+        Non-technical users across Sky's departments relied on business analysts to file change requests against a fixed set of monitoring dashboards I'd owned for the previous three years. Turnaround could be days. The available set of views never quite matched what individual users actually wanted — so they either compromised or stopped asking.
+      </p>
+
+      <h3>Approach</h3>
+      <p>
+        I built a natural-language chat interface on top of the existing dashboard system. Users ask things like <em>"show me 4G usage split by tech in a stacked bar chart over the last eight months"</em>; a custom agent parses the intent, queries OpenSearch through a custom Model Context Protocol (MCP) server, and returns a chart widget. The user can add the chart to their own dashboard, resize it, and position it however they like. Over multiple queries they assemble a dashboard tailored to their own work — no change requests, no BA loop.
+      </p>
+
+      <h3>Why a custom agent orchestrator</h3>
+      <p>
+        Sky has an internal AI gateway that didn't support tool-calling in the form I needed. Rather than shoehorn my design into its limitations, I wrote a minimal orchestrator directly on top of the raw chat-completion API. The system runs on OpenAI's GPT models (chosen over Claude for cost) and the MCP layer stays cleanly separated — swapping providers later is a config change.
+      </p>
+
+      <h3>Stack</h3>
+      <ul>
+        <li><strong>Frontend:</strong> Next.js, React, TypeScript. Chart rendering, drag-and-drop widget layout.</li>
+        <li><strong>Agent layer:</strong> Python. Custom MCP server exposing data tools. Custom agent orchestrator on OpenAI GPT models.</li>
+        <li><strong>Data:</strong> OpenSearch (the same data backbone as the pre-existing dashboards).</li>
+        <li><strong>Middleware:</strong> GraphQL, reused from the existing dashboard stack.</li>
+      </ul>
+
+      <h3>Where it stands</h3>
+      <p>
+        Pre-rollout hardening. Demoed to three stakeholder groups so far: Sky's data engineering team, another Sky observability team, and a set of Comcast executives (Sky's parent company). The director is using the project as an anchor for a broader shift in the department toward agentic workflows — which has included me running onboarding sessions on effective and safe AI use across engineering and non-engineering work.
+      </p>
+
+      <h3>What I owned</h3>
+      <ul>
+        <li>The frontend UI and widget system</li>
+        <li>The custom MCP server and the agent orchestrator</li>
+        <li>Integration against OpenSearch and the existing GraphQL middleware</li>
+        <li>The demos and onboarding sessions driving adoption</li>
+      </ul>
+    </article>
+
+    <hr />
+
+    <article class="project-detail" id="second-work-project">
+      <h2>Internal monitoring dashboards</h2>
+      <p class="meta">Sky, 2022 – present &middot; Next.js, React, GraphQL, OpenSearch, TypeScript</p>
+
+      <h3>The problem</h3>
+      <p>
+        Multiple Sky departments needed visibility into operational data — telecoms usage, service health, platform metrics. Raw OpenSearch queries weren't practical for non-technical stakeholders; product teams and operations needed curated, reliable views they could lean on day-to-day.
+      </p>
+
+      <h3>Approach</h3>
+      <p>
+        Full-stack dashboards built iteratively with each department as a stakeholder. Next.js / React on the frontend, a typed GraphQL middleware layer, OpenSearch as the data backbone. The dashboards grew in scope over three years as more teams asked to be served by them.
+      </p>
+
+      <h3>Outcome</h3>
+      <p>
+        In active use across Sky. The dashboards became the launchpad for the AI self-serve work: the pain of the BA-mediated change-request process directly motivated building something users could steer themselves.
+      </p>
+    </article>
+
+    <footer>
+      <a href="index.html">&larr; Back</a>
+      <span><a href="mailto:baileymichael114@gmail.com">baileymichael114@gmail.com</a></span>
+    </footer>
+  </div>
+</body>
+</html>
