@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Writeups — Michael Bailey</title>
   <meta name="description" content="Project writeups by Michael Bailey — AI-focused software engineering work." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -67,6 +71,75 @@
     <article class="project-detail" id="flagship-work-project">
       <h2>AI-powered self-serve dashboards</h2>
       <p class="meta">Sky, 2025 – present &middot; Built solo &middot; Next.js, Python, custom MCP, OpenAI (GPT), OpenSearch</p>
+
+      <figure class="diagram" aria-label="Three-layer architecture: AI Dashboard, Agent Orchestrator, and MCP Server, with OpenAI and OpenSearch as external dependencies.">
+        <svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" role="img">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+            </marker>
+            <style>
+              .sv-box   { fill: var(--surface); stroke: currentColor; stroke-width: 1.5; }
+              .sv-ext   { fill: none;           stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 5 4; }
+              .sv-title { font: 600 18px "Inter", system-ui, sans-serif; fill: currentColor; }
+              .sv-stack { font: 400 12.5px ui-monospace, "SF Mono", Consolas, monospace; fill: var(--muted); letter-spacing: 0.01em; }
+              .sv-label { font: 500 12px ui-monospace, "SF Mono", Consolas, monospace; fill: currentColor; letter-spacing: 0.06em; }
+              .sv-line  { fill: none; stroke: currentColor; stroke-width: 1.5; }
+              .sv-thin  { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-dasharray: 4 3; opacity: 0.75; }
+              .sv-note  { font: italic 11.5px "Inter", system-ui, sans-serif; fill: var(--muted); }
+            </style>
+          </defs>
+
+          <!-- Services row -->
+          <rect class="sv-box" x="30"  y="40" width="240" height="110" rx="6" />
+          <text class="sv-title" x="150" y="80"  text-anchor="middle">AI Dashboard</text>
+          <text class="sv-stack" x="150" y="108" text-anchor="middle">Next.js · React · TS</text>
+          <text class="sv-stack" x="150" y="128" text-anchor="middle">Recharts rendering</text>
+
+          <rect class="sv-box" x="380" y="40" width="240" height="110" rx="6" />
+          <text class="sv-title" x="500" y="80"  text-anchor="middle">Agent Orchestrator</text>
+          <text class="sv-stack" x="500" y="108" text-anchor="middle">Python · FastAPI · uvicorn</text>
+          <text class="sv-stack" x="500" y="128" text-anchor="middle">custom tool-use loop</text>
+
+          <rect class="sv-box" x="730" y="40" width="240" height="110" rx="6" />
+          <text class="sv-title" x="850" y="80"  text-anchor="middle">MCP Server</text>
+          <text class="sv-stack" x="850" y="108" text-anchor="middle">Node.js · TypeScript · MCP SDK</text>
+          <text class="sv-stack" x="850" y="128" text-anchor="middle">tools: query, resolve, edit</text>
+
+          <!-- Horizontal arrows between services -->
+          <line class="sv-line" x1="270" y1="95" x2="380" y2="95" marker-start="url(#arr)" marker-end="url(#arr)" />
+          <text class="sv-label" x="325" y="85" text-anchor="middle">SSE</text>
+
+          <line class="sv-line" x1="620" y1="95" x2="730" y2="95" marker-start="url(#arr)" marker-end="url(#arr)" />
+          <text class="sv-label" x="675" y="85" text-anchor="middle">MCP</text>
+
+          <!-- External deps -->
+          <rect class="sv-ext" x="380" y="340" width="240" height="80" rx="6" />
+          <text class="sv-title" x="500" y="378" text-anchor="middle">LLM</text>
+          <text class="sv-stack" x="500" y="400" text-anchor="middle">OpenAI GPT</text>
+
+          <rect class="sv-ext" x="730" y="340" width="240" height="80" rx="6" />
+          <text class="sv-title" x="850" y="378" text-anchor="middle">OpenSearch Cluster</text>
+          <text class="sv-stack" x="850" y="400" text-anchor="middle">data backbone</text>
+
+          <!-- Vertical arrows to externals -->
+          <line class="sv-line" x1="500" y1="150" x2="500" y2="340" marker-start="url(#arr)" marker-end="url(#arr)" />
+          <text class="sv-label" x="515" y="250" text-anchor="start">API</text>
+
+          <line class="sv-line" x1="850" y1="150" x2="850" y2="340" marker-start="url(#arr)" marker-end="url(#arr)" />
+          <text class="sv-label" x="865" y="250" text-anchor="start">DSL</text>
+
+          <!-- Cross arrow: Dashboard direct data -->
+          <path class="sv-thin" d="M 150 150 Q 150 250 730 345" marker-end="url(#arr)" />
+          <text class="sv-note" x="180" y="240" text-anchor="start">direct data for widget refresh</text>
+
+          <!-- Legend -->
+          <text class="sv-note" x="30" y="480">Solid boxes: services I built. Dashed boxes: external dependencies.</text>
+          <text class="sv-note" x="30" y="500">SSE = server-sent events · MCP = Model Context Protocol over HTTP · DSL = OpenSearch query DSL.</text>
+          <text class="sv-note" x="30" y="520">Dashed curve = Dashboard fetching widget data directly from MCP Server (bypassing the orchestrator for refreshes).</text>
+        </svg>
+        <figcaption>Three-layer topology. The orchestrator owns the agent loop; the MCP server owns the data catalogue and query path; the dashboard owns layout and widget state.</figcaption>
+      </figure>
 
       <h3>The problem</h3>
       <p>
