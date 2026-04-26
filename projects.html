@@ -180,6 +180,53 @@
 
     <hr />
 
+    <article class="project-detail" id="ask-f1">
+      <h2>Ask F1 — Conversational F1 dashboard + race-replay viewer</h2>
+      <p class="meta">Side project, 2026 &middot; Next.js 16, React 19, Vercel AI SDK v6, OpenAI (gpt-5.5 / 5.4 / 5.4-nano), TypeScript &middot; <a href="https://f1-dashboard-portfolio-project.vercel.app">Live</a> &middot; <a href="https://github.com/MBailey114/f1-dashboard">Source</a></p>
+
+      <h3>The problem I was solving</h3>
+      <p>
+        I wanted to learn the Vercel AI SDK end-to-end and have a public artifact that demonstrates the same agent-orchestration pattern I'd shipped at Sky — without proprietary code. F1 was a good fit for the data layer (Jolpica's free Ergast-successor API covers 1950–today, OpenF1 has rich telemetry for the current season) and gave me a clean excuse to build something more visually arresting than another LLM chatbot demo.
+      </p>
+
+      <h3>Approach</h3>
+      <p>
+        Two surfaces, one Next.js process, no agent framework.
+      </p>
+      <ul>
+        <li><strong>Dashboard</strong> (<code>/</code>) — chat agent with 6 typed Zod tools (<code>query_f1</code>, <code>add_widget</code>, <code>remove_widget</code>, <code>replace_widget</code>, <code>relayout_dashboard</code>, <code>compose_dashboard</code>) that mutate a 12-column grid in real time through a Zustand store. <code>compose_dashboard</code> takes a single themed prompt ("build me a Hamilton 24 vs 25 deep-dive") and returns 4–6 cohesive widgets in one streamed call. Click any widget for a scoped chat where the widget's data is pre-grounded in the system prompt and a Tavily web-search tool answers "why" questions with cited sources.</li>
+        <li><strong>Race replay viewer</strong> (<code>/tracks</code>) — pre-baked 2025 lap telemetry (OpenF1 location + car_data joined on nearest timestamp, mini-sector boundaries derived from sector segment data) replayed at 60Hz. Cars trace the racing line via Catmull-Rom spline interpolation over 10fps location samples. Multi-driver speed/throttle/brake chart below; clickable mini-sector arc segments scope playback to a corner. A live AI race-commentary HUD overlays the track — fires on each mini-sector crossing during playback, with topic-rotation logic and entity-blocklist extraction so the model varies the angle and avoids repeating drivers/topics across 30 lines of a lap.</li>
+      </ul>
+
+      <h3>Custom agent step timeline</h3>
+      <p>
+        I wasn't satisfied with how most LLM chat UIs render tool calls — a single line per tool with no inspection. So I built a custom timeline: every tool call appears as a step card with index gutter, label, duration, state badge, and a click-to-expand inspector. Each tool gets a tailored output renderer (record count + field chips for <code>query_f1</code>, mini widget-card for <code>add_widget</code>, column-strip pills for <code>relayout_dashboard</code>, source citations for <code>web_search</code>). Once the message settles, the whole timeline auto-collapses to a single pipeline pill (<code>▸ 5 steps · F1 › +W › +W › +W › ▤ · 1.82s · ✓</code>) so old conversations stay tight; click to re-expand.
+      </p>
+
+      <h3>Stack</h3>
+      <ul>
+        <li><strong>Frontend:</strong> Next.js 16 (App Router) + React 19 + TypeScript strict, Recharts 3, Tailwind 4. Zustand 5 with persist + selector subscriptions for hot-path state.</li>
+        <li><strong>AI:</strong> Vercel AI SDK v6 (<code>streamText</code>, <code>generateObject</code>, <code>useChat</code> with custom <code>DefaultChatTransport</code>). Three OpenAI model tiers — gpt-5.5 (agentic dashboard chat, 6 tools, <code>stopWhen: stepCountIs(8)</code>), gpt-5.4 (scoped widget/track chat with web search), gpt-5.4-nano (suggestions + race commentary at high request volume).</li>
+        <li><strong>Data:</strong> Jolpica F1 (Ergast successor, no auth) for 1950–today historical data; OpenF1 for current-season telemetry (used at pre-bake time only). Three-layer architecture: server flattens nested JSON, AI specifies a <code>chartConfig</code>, client pivots to Recharts wide format. <strong>The model never sees the records array</strong> — only field names plus three sample rows.</li>
+        <li><strong>Infra:</strong> Edge runtime on every API route. Next's data cache (<code>fetch(url, { next: { revalidate: 300 } })</code>) layered on top of an in-process Map for cross-invocation persistence. Race replays pre-baked into static JSON to bypass OpenF1 free-tier rate limits during demo.</li>
+      </ul>
+
+      <h3>Things I built that I'm proud of</h3>
+      <ul>
+        <li><strong><code>compose_dashboard</code> tool</strong> — one LLM call returns a typed array of 3–8 widgets with <code>cols 1–12</code> per widget. Client-side <code>packRows()</code> defensively pads under-filled rows so the AI doesn't have to be perfect at arithmetic. 10-second undo toast restores the prior dashboard if the user regrets a generative replace.</li>
+        <li><strong>Performance discipline on the tracks page</strong> — diagnosed and fixed three independent 60Hz hotspots: a <code>LiveLeaderboard</code> sort that re-ran every frame (now invariant-aware), a Recharts <code>ReferenceLine</code> that forced the whole chart tree to re-render per tick (extracted into a standalone overlay <code>div</code> that mutates <code>style.left</code>), and a Zustand subscription that allocated a lap-key string per tick (replaced with numeric identity check). Chart re-renders dropped from ~60/sec to 0/sec.</li>
+        <li><strong>Cross-invocation cache fix for Vercel Edge</strong> — production was hitting 504s on widget loads because the in-memory Map cache only worked intra-process. Layered Next's <code>revalidate: 300</code> data cache so cached responses persist across isolates.</li>
+        <li><strong>Driver-mention chips</strong> — driver names in any chat reply auto-render as 16px portrait chips with hover popover (full name, team, code). Reused across the dashboard chat, scoped widget chat, and race-commentary feed via a single segmenting helper.</li>
+      </ul>
+
+      <h3>What it doesn't have, deliberately</h3>
+      <p>
+        No auth, no DB, no mobile responsive, no agent framework, no MCP server. The whole "orchestrator" is the Vercel AI SDK plus ~30 lines of pivot logic. Token usage stays low because the model only ever sees a schema preview; chart output stays deterministic because the pivot is pure TypeScript, not LLM-generated.
+      </p>
+    </article>
+
+    <hr />
+
     <article class="project-detail" id="second-work-project">
       <h2>Internal monitoring dashboards</h2>
       <p class="meta">Sky, 2022 – present &middot; Next.js, React, GraphQL, OpenSearch, TypeScript</p>
