@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Writeups — Michael Bailey</title>
-  <meta name="description" content="Project writeups by Michael Bailey — AI-focused software engineering work." />
+  <title>Writeups | Michael Bailey</title>
+  <meta name="description" content="Project writeups by Michael Bailey. AI-focused software engineering work." />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -143,17 +143,17 @@
 
       <h3>The problem</h3>
       <p>
-        Non-technical users across Sky's departments relied on business analysts to file change requests against a fixed set of monitoring dashboards I'd owned for the previous three years. Turnaround could be days. The available set of views never quite matched what individual users actually wanted — so they either compromised or stopped asking.
+        Non-technical users across Sky's departments relied on business analysts to file change requests against a fixed set of monitoring dashboards I'd owned for the previous three years. Turnaround could be days. The available set of views never quite matched what individual users actually wanted, so they either compromised or stopped asking.
       </p>
 
       <h3>Approach</h3>
       <p>
-        I built a natural-language chat interface on top of the existing dashboard system. Users ask things like <em>"show me 4G usage split by tech in a stacked bar chart over the last eight months"</em>; a custom agent parses the intent, queries OpenSearch through a custom Model Context Protocol (MCP) server, and returns a chart widget. The user can add the chart to their own dashboard, resize it, and position it however they like. Over multiple queries they assemble a dashboard tailored to their own work — no change requests, no BA loop.
+        I built a natural-language chat interface on top of the existing dashboard system. Users ask things like <em>"show me 4G usage split by tech in a stacked bar chart over the last eight months"</em>; a custom agent parses the intent, queries OpenSearch through a custom Model Context Protocol (MCP) server, and returns a chart widget. The user can add the chart to their own dashboard, resize it, and position it however they like. Over multiple queries they assemble a dashboard tailored to their own work. No change requests, no BA loop.
       </p>
 
       <h3>Why a custom agent orchestrator</h3>
       <p>
-        Sky has an internal AI gateway that didn't support tool-calling in the form I needed. Rather than shoehorn my design into its limitations, I wrote a minimal orchestrator directly on top of the raw chat-completion API. The system runs on OpenAI's GPT models (chosen over Claude for cost) and the MCP layer stays cleanly separated — swapping providers later is a config change.
+        Sky has an internal AI gateway that didn't support tool-calling in the form I needed. Rather than shoehorn my design into its limitations, I wrote a minimal orchestrator directly on top of the raw chat-completion API. The system runs on OpenAI's GPT models (chosen over Claude for cost) and the MCP layer stays cleanly separated, so swapping providers later is a config change.
       </p>
 
       <h3>Stack</h3>
@@ -166,7 +166,7 @@
 
       <h3>Where it stands</h3>
       <p>
-        Pre-rollout hardening. Demoed to three stakeholder groups so far: Sky's data engineering team, another Sky observability team, and a set of Comcast executives (Sky's parent company). The director is using the project as an anchor for a broader shift in the department toward agentic workflows — which has included me running onboarding sessions on effective and safe AI use across engineering and non-engineering work.
+        Pre-rollout hardening. Demoed to three stakeholder groups so far: Sky's data engineering team, another Sky observability team, and a set of Comcast executives (Sky's parent company). The director is using the project as an anchor for a broader shift in the department toward agentic workflows, which has included me running onboarding sessions on effective and safe AI use across engineering and non-engineering work.
       </p>
 
       <h3>What I owned</h3>
@@ -181,62 +181,62 @@
     <hr />
 
     <article class="project-detail" id="clinical-trials-agent">
-      <h2>Clinical-Trials Agent — grounded research assistant over ClinicalTrials.gov</h2>
+      <h2>Clinical-Trials Agent: grounded research assistant for ClinicalTrials.gov</h2>
       <p class="meta">Side project, 2026 &middot; FastAPI, LangGraph, Next.js 16, OpenAI (gpt-5.5 / 5.4-nano), Postgres, Redis &middot; <a href="https://clinical-trials-agent-xi.vercel.app">Live</a> &middot; <a href="https://github.com/MBailey114/Clinical-Trials-Agent">Source</a></p>
 
       <h3>The problem I was solving</h3>
       <p>
-        A clinical-trials assistant is unforgiving about hallucination — a wrong phase or eligibility claim isn't a cute demo bug, it's misinformation. I wanted a grounded RAG agent where the model can <em>only</em> answer from data its tools actually retrieved, every factual claim carries a citation that's verified server-side, and the whole thing still reads as plain language for a non-technical reader. ClinicalTrials.gov's public v2 API was a rich, messy, real-world source to ground against.
+        With medical data, a model that makes things up is dangerous. A wrong trial phase or eligibility rule, stated as fact, is misinformation. I wanted a grounded agent that can only answer from data its tools actually retrieved, backs every fact with a citation the server verifies, and still reads as plain language for a non-technical reader. ClinicalTrials.gov's public v2 API gave me a rich, messy, real-world source to build against.
       </p>
 
       <h3>Approach</h3>
       <p>
-        Dual-stack: a FastAPI + LangGraph backend runs the agent and a deterministic retrieval funnel; a Next.js 16 frontend renders the conversation, citations, grounded charts, and a full-result-set research workspace. The agent is a bounded tool-calling graph (max 5 model steps so it always terminates) exposing four typed tools:
+        It's a dual-stack app. A FastAPI and LangGraph backend runs the agent and a deterministic retrieval funnel, and a Next.js 16 frontend renders the conversation, citations, charts, and a full-result-set research workspace. The agent is a bounded tool-calling graph (capped at 5 model steps so it always finishes) with four typed tools:
       </p>
       <ul>
-        <li><strong><code>searchClinicalTrials</code></strong> — runs the full funnel and returns token-bounded, ranked study cards; the only data the agent may ground an answer on.</li>
-        <li><strong><code>getStudyDetail</code></strong> — the full record of one trial (sponsor, endpoints, arms, eligibility, dates); fail-safe to a structured <code>{error}</code> instead of ending the turn.</li>
-        <li><strong><code>refineWithinResults</code></strong> — slice, aggregate, or sort <em>within</em> a prior run's full result set (by run id) with no new registry call; powers facet counts and "of those, which are Phase 3?" follow-ups in one cheap step.</li>
-        <li><strong><code>crossReferenceCompanyPipeline</code></strong> — fetch a company's public R&D pipeline page, LLM-extract its assets, and cross-reference them against trials already retrieved, attributed separately from registry fact.</li>
+        <li><strong><code>searchClinicalTrials</code></strong>: runs the full funnel and returns a small set of ranked, token-bounded study cards. This is the only data the agent is allowed to answer from.</li>
+        <li><strong><code>getStudyDetail</code></strong>: the full record of one trial (sponsor, endpoints, arms, eligibility, dates). On a bad id or upstream failure it returns a structured error instead of ending the turn.</li>
+        <li><strong><code>refineWithinResults</code></strong>: slices, counts, or sorts within a previous search's full result set by run id, with no new registry call. This powers phase breakdowns and "of those, which are Phase 3?" follow-ups cheaply.</li>
+        <li><strong><code>crossReferenceCompanyPipeline</code></strong>: fetches a company's public R&D pipeline page, extracts the assets with the model, and lines them up against trials already retrieved, kept separate from registry fact.</li>
       </ul>
 
       <h3>The grounding contract (the core idea)</h3>
       <p>
-        The agent may only state facts from studies its tools returned this turn. Every claim is tagged with a compact <code>[NCT_ID#section]</code> anchor the UI renders as a clickable citation pill and <strong>validates server-side</strong> against the retrieved set — so a hallucinated trial id is caught, not displayed. The same audit governs visualizations: the agent emits inline <code>[chart:timeline|…]</code>, <code>[chart:compare|…]</code>, or <code>[chart:facets:phase]</code> directives that the frontend projects from the grounding set (custom SVG/CSS, no charting library); a reference to an ungrounded trial degrades to an inline warning rather than inventing data.
+        The agent can only state facts from studies its tools returned that turn. Every claim is tagged with a compact <code>[NCT_ID#section]</code> anchor that the UI renders as a clickable citation pill and that the server checks against the retrieved set, so a made-up trial id gets caught instead of shown. The same check covers the visuals: the agent emits inline chart directives like <code>[chart:timeline|…]</code>, <code>[chart:compare|…]</code>, and <code>[chart:facets:phase]</code> that the frontend draws from the same retrieved set (hand-written SVG and CSS, no charting library). A reference to a trial it didn't retrieve falls back to a small warning rather than inventing data.
       </p>
 
       <h3>Hybrid retrieval funnel (no LLM ranking)</h3>
       <p>
-        A 5-stage funnel keeps answers fast, bounded, and reproducible. It pages field-projected candidates from the registry under a wall-clock budget, scores them with a <strong>deterministic lexical signal</strong> (condition/title overlap + status) blended with an optional embedding-based semantic signal (Redis-cached, degrading cleanly back to pure lexical if disabled or over budget), keeps the top N, hydrates heavy fields only for those, and compacts each card to a token budget. No LLM touches ranking — only a cheap model writes a short per-study synopsis, clearly labelled as not a source fact.
+        A five-stage funnel keeps answers fast, bounded, and reproducible. It pages field-projected candidates from the registry under a time budget, scores them with a deterministic lexical signal (condition and title overlap plus a status bonus), optionally blends in a semantic signal from cached embeddings, then keeps the top few, hydrates the heavy fields only for those, and trims each card to a token budget. No model is used to rank. A cheap model only writes a one or two sentence per-study summary, clearly labelled as not a source fact, and the semantic step falls back to pure lexical if it's disabled or runs over budget.
       </p>
 
-      <h3>Resumable streaming &amp; durable history</h3>
+      <h3>Resumable streaming and durable history</h3>
       <p>
-        Generation runs in a detached background task that buffers every SSE frame to Redis, so a refresh or dropped connection mid-answer <strong>replays the backlog then live-tails the same run</strong> — the reconnected answer is byte-identical to one that was never interrupted. Postgres is the durable record (conversations, messages, runs, plus the LangGraph checkpointer for multi-turn state); runs orphaned by a crash are reconciled to <code>failed</code> on startup.
+        Generation runs in a background task that writes every streamed frame to Redis, so a refresh or a dropped connection mid-answer reconnects to the same run, replays what it missed, and tails the rest. The reconnected answer is identical to one that was never interrupted. Postgres is the durable record (conversations, messages, runs, and the LangGraph state for multi-turn context), and any runs left hanging by a crash are reconciled on startup.
       </p>
 
-      <h3>Stack &amp; deployment</h3>
+      <h3>Stack and deployment</h3>
       <ul>
-        <li><strong>Backend:</strong> Python, FastAPI, LangGraph; Postgres (history + checkpointer) and Redis (live-stream buffer + explorer snapshots).</li>
-        <li><strong>Frontend:</strong> Next.js 16, React 19, Vercel AI SDK v6, Tailwind 4; every chart is hand-rolled SVG/CSS.</li>
-        <li><strong>Deployment:</strong> frontend on Vercel; backend containerized on Fly.io in London, co-located with managed Neon Postgres and Upstash Redis — the per-token Redis buffer makes co-location essential (a US/EU split made streaming crawl until I moved it). It's an open, anonymous demo, so OpenAI spend is bounded by per-IP rate limiting, a global daily kill-switch, input caps, and the OpenAI monthly cap rather than a login; chat history is isolated per browser.</li>
+        <li><strong>Backend:</strong> Python, FastAPI, LangGraph, with Postgres for history and Redis for the live-stream buffer and explorer snapshots.</li>
+        <li><strong>Frontend:</strong> Next.js 16, React 19, Vercel AI SDK v6, Tailwind 4, with every chart hand-built in SVG and CSS.</li>
+        <li><strong>Deployment:</strong> the frontend runs on Vercel and the backend runs as a container on Fly.io in London, next to managed Neon Postgres and Upstash Redis. Co-location matters here, because every token passes through the Redis buffer, so an early US/EU split made streaming crawl until I moved compute into the same region. It runs as an open demo, so OpenAI spend is capped by per-IP rate limits, a global daily limit, input-size limits, and the OpenAI monthly cap rather than a login, and each browser gets its own private history.</li>
       </ul>
 
       <h3>What I'd do next</h3>
       <p>
-        Real auth to replace the current trusted-but-forgeable tenant header (the seam is already wired in). A bot-verification gate (e.g. Turnstile) composing with the existing rate limits as one more pre-LLM check. And moving off startup auto-DDL to a proper migration tool if it ever outgrew demo scope.
+        Add real sign-in to replace the current tenant header, which is a trusted but forgeable placeholder (the seam for it is already there). Add a bot check such as Turnstile as another step in front of the model, alongside the rate limits. And move off startup schema creation to a proper migration tool if it ever grew past a demo.
       </p>
     </article>
 
     <hr />
 
     <article class="project-detail" id="ask-f1">
-      <h2>Ask F1 — Conversational F1 dashboard + race-replay viewer</h2>
+      <h2>Ask F1: conversational F1 dashboard and race-replay viewer</h2>
       <p class="meta">Side project, 2026 &middot; Next.js 16, React 19, Vercel AI SDK v6, OpenAI (gpt-5.5 / 5.4 / 5.4-nano), TypeScript &middot; <a href="https://f1-dashboard-bay.vercel.app">Live</a> &middot; <a href="https://github.com/MBailey114/f1-dashboard">Source</a></p>
 
       <h3>The problem I was solving</h3>
       <p>
-        I wanted to learn the Vercel AI SDK end-to-end and have a public artifact that demonstrates the same agent-orchestration pattern I'd shipped at Sky — without proprietary code. F1 was a good fit for the data layer (Jolpica's free Ergast-successor API covers 1950–today, OpenF1 has rich telemetry for the current season) and gave me a clean excuse to build something more visually arresting than another LLM chatbot demo.
+        I wanted to learn the Vercel AI SDK end-to-end and have a public artifact that demonstrates the same agent-orchestration pattern I'd shipped at Sky, without proprietary code. F1 was a good fit for the data layer (Jolpica's free Ergast-successor API covers 1950–today, OpenF1 has rich telemetry for the current season) and gave me a clean excuse to build something more visually arresting than another LLM chatbot demo.
       </p>
 
       <h3>Approach</h3>
@@ -244,29 +244,29 @@
         Two surfaces, one Next.js process, no agent framework.
       </p>
       <ul>
-        <li><strong>Dashboard</strong> (<code>/</code>) — chat agent with 6 typed Zod tools (<code>query_f1</code>, <code>add_widget</code>, <code>remove_widget</code>, <code>replace_widget</code>, <code>relayout_dashboard</code>, <code>compose_dashboard</code>) that mutate a 12-column grid in real time through a Zustand store. <code>compose_dashboard</code> takes a single themed prompt ("build me a Hamilton 24 vs 25 deep-dive") and returns 4–6 cohesive widgets in one streamed call. Click any widget for a scoped chat where the widget's data is pre-grounded in the system prompt and a Tavily web-search tool answers "why" questions with cited sources.</li>
-        <li><strong>Race replay viewer</strong> (<code>/tracks</code>) — pre-baked 2025 lap telemetry (OpenF1 location + car_data joined on nearest timestamp, mini-sector boundaries derived from sector segment data) replayed at 60Hz. Cars trace the racing line via Catmull-Rom spline interpolation over 10fps location samples. Multi-driver speed/throttle/brake chart below; clickable mini-sector arc segments scope playback to a corner. A live AI race-commentary HUD overlays the track — fires on each mini-sector crossing during playback, with topic-rotation logic and entity-blocklist extraction so the model varies the angle and avoids repeating drivers/topics across 30 lines of a lap.</li>
+        <li><strong>Dashboard</strong> (<code>/</code>): chat agent with 6 typed Zod tools (<code>query_f1</code>, <code>add_widget</code>, <code>remove_widget</code>, <code>replace_widget</code>, <code>relayout_dashboard</code>, <code>compose_dashboard</code>) that mutate a 12-column grid in real time through a Zustand store. <code>compose_dashboard</code> takes a single themed prompt ("build me a Hamilton 24 vs 25 deep-dive") and returns 4–6 cohesive widgets in one streamed call. Click any widget for a scoped chat where the widget's data is pre-grounded in the system prompt and a Tavily web-search tool answers "why" questions with cited sources.</li>
+        <li><strong>Race replay viewer</strong> (<code>/tracks</code>): pre-baked 2025 lap telemetry (OpenF1 location + car_data joined on nearest timestamp, mini-sector boundaries derived from sector segment data) replayed at 60Hz. Cars trace the racing line via Catmull-Rom spline interpolation over 10fps location samples. Multi-driver speed/throttle/brake chart below; clickable mini-sector arc segments scope playback to a corner. A live AI race-commentary HUD overlays the track, firing on each mini-sector crossing during playback, with topic-rotation logic and entity-blocklist extraction so the model varies the angle and avoids repeating drivers or topics across 30 lines of a lap.</li>
       </ul>
 
       <h3>Custom agent step timeline</h3>
       <p>
-        I wasn't satisfied with how most LLM chat UIs render tool calls — a single line per tool with no inspection. So I built a custom timeline: every tool call appears as a step card with index gutter, label, duration, state badge, and a click-to-expand inspector. Each tool gets a tailored output renderer (record count + field chips for <code>query_f1</code>, mini widget-card for <code>add_widget</code>, column-strip pills for <code>relayout_dashboard</code>, source citations for <code>web_search</code>). Once the message settles, the whole timeline auto-collapses to a single pipeline pill (<code>▸ 5 steps · F1 › +W › +W › +W › ▤ · 1.82s · ✓</code>) so old conversations stay tight; click to re-expand.
+        I wasn't satisfied with how most LLM chat UIs render tool calls: a single line per tool with no inspection. So I built a custom timeline: every tool call appears as a step card with index gutter, label, duration, state badge, and a click-to-expand inspector. Each tool gets a tailored output renderer (record count + field chips for <code>query_f1</code>, mini widget-card for <code>add_widget</code>, column-strip pills for <code>relayout_dashboard</code>, source citations for <code>web_search</code>). Once the message settles, the whole timeline auto-collapses to a single pipeline pill (<code>▸ 5 steps · F1 › +W › +W › +W › ▤ · 1.82s · ✓</code>) so old conversations stay tight; click to re-expand.
       </p>
 
       <h3>Stack</h3>
       <ul>
         <li><strong>Frontend:</strong> Next.js 16 (App Router) + React 19 + TypeScript strict, Recharts 3, Tailwind 4. Zustand 5 with persist + selector subscriptions for hot-path state.</li>
-        <li><strong>AI:</strong> Vercel AI SDK v6 (<code>streamText</code>, <code>generateObject</code>, <code>useChat</code> with custom <code>DefaultChatTransport</code>). Three OpenAI model tiers — gpt-5.5 (agentic dashboard chat, 6 tools, <code>stopWhen: stepCountIs(8)</code>), gpt-5.4 (scoped widget/track chat with web search), gpt-5.4-nano (suggestions + race commentary at high request volume).</li>
-        <li><strong>Data:</strong> Jolpica F1 (Ergast successor, no auth) for 1950–today historical data; OpenF1 for current-season telemetry (used at pre-bake time only). Three-layer architecture: server flattens nested JSON, AI specifies a <code>chartConfig</code>, client pivots to Recharts wide format. <strong>The model never sees the records array</strong> — only field names plus three sample rows.</li>
+        <li><strong>AI:</strong> Vercel AI SDK v6 (<code>streamText</code>, <code>generateObject</code>, <code>useChat</code> with custom <code>DefaultChatTransport</code>). Three OpenAI model tiers: gpt-5.5 (agentic dashboard chat, 6 tools, <code>stopWhen: stepCountIs(8)</code>), gpt-5.4 (scoped widget/track chat with web search), and gpt-5.4-nano (suggestions + race commentary at high request volume).</li>
+        <li><strong>Data:</strong> Jolpica F1 (Ergast successor, no auth) for 1950–today historical data; OpenF1 for current-season telemetry (used at pre-bake time only). Three-layer architecture: server flattens nested JSON, AI specifies a <code>chartConfig</code>, client pivots to Recharts wide format. <strong>The model never sees the records array</strong>, only field names plus three sample rows.</li>
         <li><strong>Infra:</strong> Edge runtime on every API route. Next's data cache (<code>fetch(url, { next: { revalidate: 300 } })</code>) layered on top of an in-process Map for cross-invocation persistence. Race replays pre-baked into static JSON to bypass OpenF1 free-tier rate limits during demo.</li>
       </ul>
 
       <h3>Things I built that I'm proud of</h3>
       <ul>
-        <li><strong><code>compose_dashboard</code> tool</strong> — one LLM call returns a typed array of 3–8 widgets with <code>cols 1–12</code> per widget. Client-side <code>packRows()</code> defensively pads under-filled rows so the AI doesn't have to be perfect at arithmetic. 10-second undo toast restores the prior dashboard if the user regrets a generative replace.</li>
-        <li><strong>Performance discipline on the tracks page</strong> — diagnosed and fixed three independent 60Hz hotspots: a <code>LiveLeaderboard</code> sort that re-ran every frame (now invariant-aware), a Recharts <code>ReferenceLine</code> that forced the whole chart tree to re-render per tick (extracted into a standalone overlay <code>div</code> that mutates <code>style.left</code>), and a Zustand subscription that allocated a lap-key string per tick (replaced with numeric identity check). Chart re-renders dropped from ~60/sec to 0/sec.</li>
-        <li><strong>Cross-invocation cache fix for Vercel Edge</strong> — production was hitting 504s on widget loads because the in-memory Map cache only worked intra-process. Layered Next's <code>revalidate: 300</code> data cache so cached responses persist across isolates.</li>
-        <li><strong>Driver-mention chips</strong> — driver names in any chat reply auto-render as 16px portrait chips with hover popover (full name, team, code). Reused across the dashboard chat, scoped widget chat, and race-commentary feed via a single segmenting helper.</li>
+        <li><strong><code>compose_dashboard</code> tool</strong>: one LLM call returns a typed array of 3–8 widgets with <code>cols 1–12</code> per widget. Client-side <code>packRows()</code> defensively pads under-filled rows so the AI doesn't have to be perfect at arithmetic. 10-second undo toast restores the prior dashboard if the user regrets a generative replace.</li>
+        <li><strong>Performance discipline on the tracks page</strong>: diagnosed and fixed three independent 60Hz hotspots: a <code>LiveLeaderboard</code> sort that re-ran every frame (now invariant-aware), a Recharts <code>ReferenceLine</code> that forced the whole chart tree to re-render per tick (extracted into a standalone overlay <code>div</code> that mutates <code>style.left</code>), and a Zustand subscription that allocated a lap-key string per tick (replaced with numeric identity check). Chart re-renders dropped from ~60/sec to 0/sec.</li>
+        <li><strong>Cross-invocation cache fix for Vercel Edge</strong>: production was hitting 504s on widget loads because the in-memory Map cache only worked intra-process. Layered Next's <code>revalidate: 300</code> data cache so cached responses persist across isolates.</li>
+        <li><strong>Driver-mention chips</strong>: driver names in any chat reply auto-render as 16px portrait chips with hover popover (full name, team, code). Reused across the dashboard chat, scoped widget chat, and race-commentary feed via a single segmenting helper.</li>
       </ul>
 
       <h3>What it doesn't have, deliberately</h3>
@@ -283,7 +283,7 @@
 
       <h3>The problem</h3>
       <p>
-        Multiple Sky departments needed visibility into operational data — telecoms usage, service health, platform metrics. Raw OpenSearch queries weren't practical for non-technical stakeholders; product teams and operations needed curated, reliable views they could lean on day-to-day.
+        Multiple Sky departments needed visibility into operational data such as telecoms usage, service health, and platform metrics. Raw OpenSearch queries weren't practical for non-technical stakeholders, and product teams and operations needed curated, reliable views they could lean on day-to-day.
       </p>
 
       <h3>Approach</h3>
