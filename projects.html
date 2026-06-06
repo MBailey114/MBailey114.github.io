@@ -180,6 +180,56 @@
 
     <hr />
 
+    <article class="project-detail" id="clinical-trials-agent">
+      <h2>Clinical-Trials Agent — grounded research assistant over ClinicalTrials.gov</h2>
+      <p class="meta">Side project, 2026 &middot; FastAPI, LangGraph, Next.js 16, OpenAI (gpt-5.5 / 5.4-nano), Postgres, Redis &middot; <a href="https://clinical-trials-agent-xi.vercel.app">Live</a> &middot; <a href="https://github.com/MBailey114/Clinical-Trials-Agent">Source</a></p>
+
+      <h3>The problem I was solving</h3>
+      <p>
+        A clinical-trials assistant is unforgiving about hallucination — a wrong phase or eligibility claim isn't a cute demo bug, it's misinformation. I wanted a grounded RAG agent where the model can <em>only</em> answer from data its tools actually retrieved, every factual claim carries a citation that's verified server-side, and the whole thing still reads as plain language for a non-technical reader. ClinicalTrials.gov's public v2 API was a rich, messy, real-world source to ground against.
+      </p>
+
+      <h3>Approach</h3>
+      <p>
+        Dual-stack: a FastAPI + LangGraph backend runs the agent and a deterministic retrieval funnel; a Next.js 16 frontend renders the conversation, citations, grounded charts, and a full-result-set research workspace. The agent is a bounded tool-calling graph (max 5 model steps so it always terminates) exposing four typed tools:
+      </p>
+      <ul>
+        <li><strong><code>searchClinicalTrials</code></strong> — runs the full funnel and returns token-bounded, ranked study cards; the only data the agent may ground an answer on.</li>
+        <li><strong><code>getStudyDetail</code></strong> — the full record of one trial (sponsor, endpoints, arms, eligibility, dates); fail-safe to a structured <code>{error}</code> instead of ending the turn.</li>
+        <li><strong><code>refineWithinResults</code></strong> — slice, aggregate, or sort <em>within</em> a prior run's full result set (by run id) with no new registry call; powers facet counts and "of those, which are Phase 3?" follow-ups in one cheap step.</li>
+        <li><strong><code>crossReferenceCompanyPipeline</code></strong> — fetch a company's public R&D pipeline page, LLM-extract its assets, and cross-reference them against trials already retrieved, attributed separately from registry fact.</li>
+      </ul>
+
+      <h3>The grounding contract (the core idea)</h3>
+      <p>
+        The agent may only state facts from studies its tools returned this turn. Every claim is tagged with a compact <code>[NCT_ID#section]</code> anchor the UI renders as a clickable citation pill and <strong>validates server-side</strong> against the retrieved set — so a hallucinated trial id is caught, not displayed. The same audit governs visualizations: the agent emits inline <code>[chart:timeline|…]</code>, <code>[chart:compare|…]</code>, or <code>[chart:facets:phase]</code> directives that the frontend projects from the grounding set (custom SVG/CSS, no charting library); a reference to an ungrounded trial degrades to an inline warning rather than inventing data.
+      </p>
+
+      <h3>Hybrid retrieval funnel (no LLM ranking)</h3>
+      <p>
+        A 5-stage funnel keeps answers fast, bounded, and reproducible. It pages field-projected candidates from the registry under a wall-clock budget, scores them with a <strong>deterministic lexical signal</strong> (condition/title overlap + status) blended with an optional embedding-based semantic signal (Redis-cached, degrading cleanly back to pure lexical if disabled or over budget), keeps the top N, hydrates heavy fields only for those, and compacts each card to a token budget. No LLM touches ranking — only a cheap model writes a short per-study synopsis, clearly labelled as not a source fact.
+      </p>
+
+      <h3>Resumable streaming &amp; durable history</h3>
+      <p>
+        Generation runs in a detached background task that buffers every SSE frame to Redis, so a refresh or dropped connection mid-answer <strong>replays the backlog then live-tails the same run</strong> — the reconnected answer is byte-identical to one that was never interrupted. Postgres is the durable record (conversations, messages, runs, plus the LangGraph checkpointer for multi-turn state); runs orphaned by a crash are reconciled to <code>failed</code> on startup.
+      </p>
+
+      <h3>Stack &amp; deployment</h3>
+      <ul>
+        <li><strong>Backend:</strong> Python, FastAPI, LangGraph; Postgres (history + checkpointer) and Redis (live-stream buffer + explorer snapshots).</li>
+        <li><strong>Frontend:</strong> Next.js 16, React 19, Vercel AI SDK v6, Tailwind 4; every chart is hand-rolled SVG/CSS.</li>
+        <li><strong>Deployment:</strong> frontend on Vercel; backend containerized on Fly.io in London, co-located with managed Neon Postgres and Upstash Redis — the per-token Redis buffer makes co-location essential (a US/EU split made streaming crawl until I moved it). It's an open, anonymous demo, so OpenAI spend is bounded by per-IP rate limiting, a global daily kill-switch, input caps, and the OpenAI monthly cap rather than a login; chat history is isolated per browser.</li>
+      </ul>
+
+      <h3>What I'd do next</h3>
+      <p>
+        Real auth to replace the current trusted-but-forgeable tenant header (the seam is already wired in). A bot-verification gate (e.g. Turnstile) composing with the existing rate limits as one more pre-LLM check. And moving off startup auto-DDL to a proper migration tool if it ever outgrew demo scope.
+      </p>
+    </article>
+
+    <hr />
+
     <article class="project-detail" id="ask-f1">
       <h2>Ask F1 — Conversational F1 dashboard + race-replay viewer</h2>
       <p class="meta">Side project, 2026 &middot; Next.js 16, React 19, Vercel AI SDK v6, OpenAI (gpt-5.5 / 5.4 / 5.4-nano), TypeScript &middot; <a href="https://f1-dashboard-bay.vercel.app">Live</a> &middot; <a href="https://github.com/MBailey114/f1-dashboard">Source</a></p>
